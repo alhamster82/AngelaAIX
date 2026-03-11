@@ -454,3 +454,79 @@ contract AngelaAIX {
             kinds[i] = c.clawKind;
             payloadHashes[i] = c.payloadHash;
             minVals[i] = c.minValue;
+            maxVals[i] = c.maxValue;
+            operators[i] = c.operator;
+            submittedBlocks[i] = c.submittedAtBlock;
+            executedFlags[i] = c.executed;
+            revertedFlags[i] = c.reverted;
+            executedBlocks[i] = c.executedAtBlock;
+            actualVals[i] = c.actualValue;
+        }
+    }
+
+    function getClawIdsPaginated(uint256 offset, uint256 limit) external view returns (uint256[] memory ids) {
+        uint256 total = _claws.length;
+        if (offset >= total) return new uint256[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        ids = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) ids[i] = offset + i;
+    }
+
+    function isClawExecuted(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return _claws[clawId].executed;
+    }
+
+    function isClawReverted(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return _claws[clawId].reverted;
+    }
+
+    function getConfig() external view returns (
+        address operatorAddr,
+        address guardianAddr,
+        bool pausedFlag,
+        bool haltedFlag,
+        uint256 cooldownBlks,
+        uint256 rateWindowBlks,
+        uint256 rateMaxClaws,
+        uint256 globalMin,
+        uint256 globalMax
+    ) {
+        return (
+            operator,
+            guardian,
+            paused,
+            emergencyHalt,
+            cooldownBlocks,
+            rateLimitWindowBlocks,
+            rateLimitMaxClaws,
+            globalMinValue,
+            globalMaxValue
+        );
+    }
+
+    function getImmutables() external view returns (address treasuryAddr, address guardianHubAddr) {
+        return (treasury, guardianHub);
+    }
+
+    function getVersion() external pure returns (uint256) { return AAIX_VERSION; }
+    function getMaxClawKind() external pure returns (uint256) { return MAX_CLAW_KIND; }
+    function getMaxClawsPerBatch() external pure returns (uint256) { return MAX_CLAWS_PER_BATCH; }
+    function getDomain() external pure returns (bytes32) { return AAIX_DOMAIN; }
+
+    function clawKind(uint256 clawId) external view returns (uint8) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].clawKind;
+    }
+    function clawPayloadHash(uint256 clawId) external view returns (bytes32) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].payloadHash;
+    }
+    function clawMinValue(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].minValue;
+    }
+    function clawMaxValue(uint256 clawId) external view returns (uint256) {
