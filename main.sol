@@ -986,3 +986,79 @@ contract AngelaAIX {
     function checkRateLimit() external view returns (bool ok, uint256 used, uint256 allowed) {
         uint256 windowStart = block.number - (block.number % rateLimitWindowBlocks);
         used = _clawsInWindow[windowStart];
+        allowed = rateLimitMaxClaws;
+        return (used < allowed, used, allowed);
+    }
+
+    function isWithinBounds(uint256 value) external view returns (bool) {
+        return value >= globalMinValue && value <= globalMaxValue;
+    }
+    function isClawPending(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return !_claws[clawId].executed && !_claws[clawId].reverted;
+    }
+
+    function computeWindowStart(uint256 blockNum) external view returns (uint256) {
+        return blockNum - (blockNum % rateLimitWindowBlocks);
+    }
+    function computeCooldownEnd(uint256 lastBlock) external view returns (uint256) {
+        return lastBlock + cooldownBlocks;
+    }
+
+    function getClawFull(uint256 clawId) external view returns (
+        uint8 kind,
+        bytes32 payloadHashVal,
+        uint256 minVal,
+        uint256 maxVal,
+        address operatorAddr,
+        uint256 submittedBlock,
+        bool executedFlag,
+        bool revertedFlag,
+        uint256 executedBlock,
+        uint256 actualVal
+    ) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        ClawRecord storage c = _claws[clawId];
+        kind = c.clawKind;
+        payloadHashVal = c.payloadHash;
+        minVal = c.minValue;
+        maxVal = c.maxValue;
+        operatorAddr = c.operator;
+        submittedBlock = c.submittedAtBlock;
+        executedFlag = c.executed;
+        revertedFlag = c.reverted;
+        executedBlock = c.executedAtBlock;
+        actualVal = c.actualValue;
+    }
+
+    function getMultipleClawFull(uint256[] calldata clawIds) external view returns (
+        uint8[] memory kinds,
+        bytes32[] memory payloadHashesOut,
+        uint256[] memory minValsOut,
+        uint256[] memory maxValsOut,
+        address[] memory operatorsOut,
+        uint256[] memory submittedBlocksOut,
+        bool[] memory executedOut,
+        bool[] memory revertedOut,
+        uint256[] memory executedBlocksOut,
+        uint256[] memory actualValsOut
+    ) {
+        uint256 n = clawIds.length;
+        kinds = new uint8[](n);
+        payloadHashesOut = new bytes32[](n);
+        minValsOut = new uint256[](n);
+        maxValsOut = new uint256[](n);
+        operatorsOut = new address[](n);
+        submittedBlocksOut = new uint256[](n);
+        executedOut = new bool[](n);
+        revertedOut = new bool[](n);
+        executedBlocksOut = new uint256[](n);
+        actualValsOut = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            ClawRecord storage c = _claws[clawIds[i]];
+            kinds[i] = c.clawKind;
+            payloadHashesOut[i] = c.payloadHash;
+            minValsOut[i] = c.minValue;
+            maxValsOut[i] = c.maxValue;
+            operatorsOut[i] = c.operator;
