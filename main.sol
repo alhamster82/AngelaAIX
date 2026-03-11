@@ -682,3 +682,79 @@ contract AngelaAIX {
             minVals[i] = c.minValue;
             maxVals[i] = c.maxValue;
             executedFlags[i] = c.executed;
+            revertedFlags[i] = c.reverted;
+            actualVals[i] = c.actualValue;
+        }
+    }
+
+    function getClawsRange(uint256 fromId, uint256 toId) external view returns (
+        uint256[] memory ids,
+        uint8[] memory kinds,
+        bytes32[] memory payloadHashes,
+        uint256[] memory minVals,
+        uint256[] memory maxVals,
+        bool[] memory executedFlags,
+        bool[] memory revertedFlags
+    ) {
+        if (toId > _claws.length) toId = _claws.length;
+        if (fromId >= toId) {
+            return (
+                new uint256[](0),
+                new uint8[](0),
+                new bytes32[](0),
+                new uint256[](0),
+                new uint256[](0),
+                new bool[](0),
+                new bool[](0)
+            );
+        }
+        uint256 n = toId - fromId;
+        ids = new uint256[](n);
+        kinds = new uint8[](n);
+        payloadHashes = new bytes32[](n);
+        minVals = new uint256[](n);
+        maxVals = new uint256[](n);
+        executedFlags = new bool[](n);
+        revertedFlags = new bool[](n);
+        for (uint256 i = 0; i < n; i++) {
+            uint256 id = fromId + i;
+            ClawRecord storage c = _claws[id];
+            ids[i] = id;
+            kinds[i] = c.clawKind;
+            payloadHashes[i] = c.payloadHash;
+            minVals[i] = c.minValue;
+            maxVals[i] = c.maxValue;
+            executedFlags[i] = c.executed;
+            revertedFlags[i] = c.reverted;
+        }
+    }
+
+    function getStateSnapshot() external view returns (
+        uint256 totalClaws,
+        uint256 executedCount,
+        uint256 revertedCount,
+        uint256 pendingCount,
+        uint256 lastClawBlockNum,
+        uint256 balanceWei,
+        bool pausedState,
+        bool haltedState
+    ) {
+        uint256 ex = 0;
+        uint256 rv = 0;
+        for (uint256 i = 0; i < _claws.length; i++) {
+            if (_claws[i].executed) ex++;
+            else if (_claws[i].reverted) rv++;
+        }
+        return (
+            _claws.length,
+            ex,
+            rv,
+            _claws.length - ex - rv,
+            _lastClawBlock,
+            address(this).balance,
+            paused,
+            emergencyHalt
+        );
+    }
+
+    function getConstants() external pure returns (
