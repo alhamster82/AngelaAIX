@@ -1138,3 +1138,79 @@ contract AngelaAIX {
         return (paused, emergencyHalt, _claws.length, address(this).balance);
     }
 
+    function exists(uint256 clawId) external view returns (bool) {
+        return clawId < _claws.length;
+    }
+    function validClawId(uint256 clawId) external view returns (bool) {
+        return clawId < _claws.length;
+    }
+    function hasClaws() external view returns (bool) {
+        return _claws.length > 0;
+    }
+    function empty() external view returns (bool) {
+        return _claws.length == 0;
+    }
+
+    function addU256(uint256 a, uint256 b) external pure returns (uint256) { return a + b; }
+    function subU256(uint256 a, uint256 b) external pure returns (uint256) { return a - b; }
+    function mulU256(uint256 a, uint256 b) external pure returns (uint256) { return a * b; }
+    function divU256(uint256 a, uint256 b) external pure returns (uint256) { return a / b; }
+    function modU256(uint256 a, uint256 b) external pure returns (uint256) { return a % b; }
+    function eqU256(uint256 a, uint256 b) external pure returns (bool) { return a == b; }
+    function ltU256(uint256 a, uint256 b) external pure returns (bool) { return a < b; }
+    function leU256(uint256 a, uint256 b) external pure returns (bool) { return a <= b; }
+    function gtU256(uint256 a, uint256 b) external pure returns (bool) { return a > b; }
+    function geU256(uint256 a, uint256 b) external pure returns (bool) { return a >= b; }
+
+    function getClawIdsSlice(uint256 start, uint256 length) external view returns (uint256[] memory) {
+        if (start >= _claws.length) return new uint256[](0);
+        uint256 end = start + length;
+        if (end > _claws.length) end = _claws.length;
+        uint256 n = end - start;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = start + i;
+        return out;
+    }
+    function getClawIdsFromTo(uint256 fromId, uint256 toId) external view returns (uint256[] memory) {
+        if (toId > _claws.length) toId = _claws.length;
+        if (fromId >= toId) return new uint256[](0);
+        uint256 n = toId - fromId;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = fromId + i;
+        return out;
+    }
+    function getExecutedClawIds(uint256 maxReturn) external view returns (uint256[] memory) {
+        uint256[] memory temp = new uint256[](_claws.length);
+        uint256 count = 0;
+        for (uint256 i = 0; i < _claws.length && count < maxReturn; i++) {
+            if (_claws[i].executed) { temp[count] = i; count++; }
+        }
+        uint256[] memory out = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) out[i] = temp[i];
+        return out;
+    }
+    function getRevertedClawIds(uint256 maxReturn) external view returns (uint256[] memory) {
+        uint256[] memory temp = new uint256[](_claws.length);
+        uint256 count = 0;
+        for (uint256 i = 0; i < _claws.length && count < maxReturn; i++) {
+            if (_claws[i].reverted) { temp[count] = i; count++; }
+        }
+        uint256[] memory out = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) out[i] = temp[i];
+        return out;
+    }
+    function sumMinValuesExecuted() external view returns (uint256 sum) {
+        for (uint256 i = 0; i < _claws.length; i++)
+            if (_claws[i].executed) sum += _claws[i].minValue;
+    }
+    function sumMaxValuesExecuted() external view returns (uint256 sum) {
+        for (uint256 i = 0; i < _claws.length; i++)
+            if (_claws[i].executed) sum += _claws[i].maxValue;
+    }
+    function sumActualValuesExecuted() external view returns (uint256) {
+        return sumActualValues();
+    }
+    function averageActualValue() external view returns (uint256) {
+        uint256 ex = 0;
+        uint256 sum = 0;
+        for (uint256 i = 0; i < _claws.length; i++) {
