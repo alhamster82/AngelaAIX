@@ -606,3 +606,79 @@ contract AngelaAIX {
         }
         uint256[] memory out = new uint256[](count);
         for (uint256 i = 0; i < count; i++) out[i] = temp[i];
+        return out;
+    }
+    function getPendingClawIds(uint256 maxReturn) external view returns (uint256[] memory) {
+        uint256[] memory temp = new uint256[](_claws.length);
+        uint256 count = 0;
+        for (uint256 i = 0; i < _claws.length && count < maxReturn; i++) {
+            if (!_claws[i].executed && !_claws[i].reverted) { temp[count] = i; count++; }
+        }
+        uint256[] memory out = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) out[i] = temp[i];
+        return out;
+    }
+
+    function sumActualValues() external view returns (uint256 sum) {
+        for (uint256 i = 0; i < _claws.length; i++)
+            if (_claws[i].executed) sum += _claws[i].actualValue;
+    }
+    function sumMaxValuesPending() external view returns (uint256 sum) {
+        for (uint256 i = 0; i < _claws.length; i++)
+            if (!_claws[i].executed && !_claws[i].reverted) sum += _claws[i].maxValue;
+    }
+
+    function minU256(uint256 a, uint256 b) external pure returns (uint256) { return a < b ? a : b; }
+    function maxU256(uint256 a, uint256 b) external pure returns (uint256) { return a > b ? a : b; }
+    function clampValue(uint256 v, uint256 lo, uint256 hi) external pure returns (uint256) {
+        if (v < lo) return lo;
+        if (v > hi) return hi;
+        return v;
+    }
+
+    function isOperator(address account) external view returns (bool) { return account == operator; }
+    function isGuardian(address account) external view returns (bool) { return account == guardian; }
+    function isTreasury(address account) external view returns (bool) { return account == treasury; }
+
+    function getCurrentWindowStart() external view returns (uint256) {
+        return block.number - (block.number % rateLimitWindowBlocks);
+    }
+    function getClawsInWindowAt(uint256 windowStart) external view returns (uint256) {
+        return _clawsInWindow[windowStart];
+    }
+
+    function getClawSummary(uint256 clawId) external view returns (
+        uint8 kind,
+        uint256 minVal,
+        uint256 maxVal,
+        bool executed,
+        bool reverted,
+        uint256 actualVal
+    ) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        ClawRecord storage c = _claws[clawId];
+        return (c.clawKind, c.minValue, c.maxValue, c.executed, c.reverted, c.actualValue);
+    }
+
+    function getClawSummariesBatch(uint256[] calldata clawIds) external view returns (
+        uint8[] memory kinds,
+        uint256[] memory minVals,
+        uint256[] memory maxVals,
+        bool[] memory executedFlags,
+        bool[] memory revertedFlags,
+        uint256[] memory actualVals
+    ) {
+        uint256 n = clawIds.length;
+        kinds = new uint8[](n);
+        minVals = new uint256[](n);
+        maxVals = new uint256[](n);
+        executedFlags = new bool[](n);
+        revertedFlags = new bool[](n);
+        actualVals = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            ClawRecord storage c = _claws[clawIds[i]];
+            kinds[i] = c.clawKind;
+            minVals[i] = c.minValue;
+            maxVals[i] = c.maxValue;
+            executedFlags[i] = c.executed;
