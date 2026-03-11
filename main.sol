@@ -302,3 +302,79 @@ contract AngelaAIX {
     }
 
     function setGuardian(address newGuardian) external onlyGuardian {
+        if (newGuardian == address(0)) revert Angela_ZeroAddress();
+        address prev = guardian;
+        guardian = newGuardian;
+        emit GuardianSet(prev, newGuardian);
+    }
+
+    function setPaused(bool paused_) external onlyGuardian {
+        paused = paused_;
+        emit PauseToggled(paused, msg.sender, block.number);
+    }
+
+    function setEmergencyHalt() external onlyGuardian {
+        emergencyHalt = true;
+        emit EmergencyHalt(block.number, msg.sender);
+    }
+
+    function clearEmergencyHalt() external onlyGuardian {
+        emergencyHalt = false;
+    }
+
+    function setCooldownBlocks(uint256 blocks) external onlyGuardian {
+        if (blocks < MIN_COOLDOWN_BLOCKS || blocks > MAX_COOLDOWN_BLOCKS) revert Angela_InvalidCooldown();
+        cooldownBlocks = blocks;
+        emit CooldownConfigured(blocks);
+    }
+
+    function setRateLimit(uint256 maxClawsPerWindow, uint256 windowBlocks) external onlyGuardian {
+        if (windowBlocks < MIN_WINDOW_BLOCKS || windowBlocks > MAX_WINDOW_BLOCKS) revert Angela_InvalidWindow();
+        rateLimitMaxClaws = maxClawsPerWindow;
+        rateLimitWindowBlocks = windowBlocks;
+        emit RateLimitConfigured(maxClawsPerWindow, windowBlocks);
+    }
+
+    function setValueBounds(uint256 globalMin, uint256 globalMax) external onlyGuardian {
+        globalMinValue = globalMin;
+        globalMaxValue = globalMax;
+        emit ValueBoundsConfigured(globalMin, globalMax);
+    }
+
+    function withdrawToTreasury(uint256 amount) external onlyGuardian nonReentrant {
+        if (amount == 0) return;
+        (bool ok,) = payable(treasury).call{value: amount}("");
+        if (!ok) revert Angela_TransferFailed();
+        emit TreasuryWithdrawn(treasury, amount, block.number);
+    }
+
+    // -------------------------------------------------------------------------
+    // VIEWS
+    // -------------------------------------------------------------------------
+
+    function getClaw(uint256 clawId) external view returns (
+        uint8 clawKind,
+        bytes32 payloadHash,
+        uint256 minValue,
+        uint256 maxValue,
+        address operatorAddr,
+        uint256 submittedAtBlock,
+        bool executed,
+        bool reverted,
+        uint256 executedAtBlock,
+        uint256 actualValue
+    ) {
+        if (clawId >= _claws.length) revert Angela_ClawNotFound();
+        ClawRecord storage c = _claws[clawId];
+        return (
+            c.clawKind,
+            c.payloadHash,
+            c.minValue,
+            c.maxValue,
+            c.operator,
+            c.submittedAtBlock,
+            c.executed,
+            c.reverted,
+            c.executedAtBlock,
+            c.actualValue
+        );
