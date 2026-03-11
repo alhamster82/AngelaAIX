@@ -910,3 +910,79 @@ contract AngelaAIX {
     function getMaxValuesBatch(uint256[] calldata clawIds) external view returns (uint256[] memory) {
         uint256 n = clawIds.length;
         uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            out[i] = _claws[clawIds[i]].maxValue;
+        }
+        return out;
+    }
+    function getOperatorsBatch(uint256[] calldata clawIds) external view returns (address[] memory) {
+        uint256 n = clawIds.length;
+        address[] memory out = new address[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            out[i] = _claws[clawIds[i]].operator;
+        }
+        return out;
+    }
+    function getExecutedFlagsBatch(uint256[] calldata clawIds) external view returns (bool[] memory) {
+        uint256 n = clawIds.length;
+        bool[] memory out = new bool[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] < _claws.length) out[i] = _claws[clawIds[i]].executed;
+        }
+        return out;
+    }
+    function getRevertedFlagsBatch(uint256[] calldata clawIds) external view returns (bool[] memory) {
+        uint256 n = clawIds.length;
+        bool[] memory out = new bool[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] < _claws.length) out[i] = _claws[clawIds[i]].reverted;
+        }
+        return out;
+    }
+    function getActualValuesBatch(uint256[] calldata clawIds) external view returns (uint256[] memory) {
+        uint256 n = clawIds.length;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] < _claws.length) out[i] = _claws[clawIds[i]].actualValue;
+        }
+        return out;
+    }
+
+    function firstClawId() external view returns (uint256) {
+        if (_claws.length == 0) revert Angela_ClawNotFound();
+        return 0;
+    }
+    function lastClawId() external view returns (uint256) {
+        if (_claws.length == 0) revert Angela_ClawNotFound();
+        return _claws.length - 1;
+    }
+
+    function getTreasuryAddress() external view returns (address) { return treasury; }
+    function getGuardianHubAddress() external view returns (address) { return guardianHub; }
+    function getOperatorAddress() external view returns (address) { return operator; }
+    function getGuardianAddress() external view returns (address) { return guardian; }
+    function getPausedStatus() external view returns (bool) { return paused; }
+    function getHaltStatus() external view returns (bool) { return emergencyHalt; }
+    function getCooldown() external view returns (uint256) { return cooldownBlocks; }
+    function getRateWindow() external view returns (uint256) { return rateLimitWindowBlocks; }
+    function getRateMax() external view returns (uint256) { return rateLimitMaxClaws; }
+    function getGlobalMin() external view returns (uint256) { return globalMinValue; }
+    function getGlobalMax() external view returns (uint256) { return globalMaxValue; }
+
+    function balance() external view returns (uint256) { return address(this).balance; }
+    function totalClaws() external view returns (uint256) { return _claws.length; }
+    function lastClawBlockNumber() external view returns (uint256) { return _lastClawBlock; }
+
+    function kindName(uint8 k) external pure returns (string memory) { return getClawKindName(k); }
+    function domainHash() external pure returns (bytes32) { return AAIX_DOMAIN; }
+    function revision() external pure returns (uint256) { return AAIX_VERSION; }
+
+    function checkCooldown() external view returns (bool ok, uint256 blocksLeft) {
+        if (_lastClawBlock + cooldownBlocks <= block.number) return (true, 0);
+        return (false, _lastClawBlock + cooldownBlocks - block.number);
+    }
+    function checkRateLimit() external view returns (bool ok, uint256 used, uint256 allowed) {
+        uint256 windowStart = block.number - (block.number % rateLimitWindowBlocks);
+        used = _clawsInWindow[windowStart];
