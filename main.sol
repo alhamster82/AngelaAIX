@@ -226,3 +226,79 @@ contract AngelaAIX {
         if (n != payloadHashes.length || n != minValues.length || n != maxValues.length) revert Angela_ArrayLengthMismatch();
         if (n > MAX_CLAWS_PER_BATCH) revert Angela_BatchTooLarge();
 
+        clawIds = new uint256[](n);
+        uint256 lastBlock = _lastClawBlock;
+        uint256 windowStart = block.number - (block.number % rateLimitWindowBlocks);
+        uint256 windowCount = _clawsInWindow[windowStart];
+
+        for (uint256 i = 0; i < n; i++) {
+            if (clawKinds[i] == 0) revert Angela_ZeroClawKind();
+            if (clawKinds[i] > MAX_CLAW_KIND) revert Angela_InvalidClawKind();
+            if (block.number < lastBlock + cooldownBlocks && i > 0) revert Angela_CooldownActive();
+            windowCount++;
+            if (windowCount > rateLimitMaxClaws) revert Angela_RateLimitExceeded();
+
+            if (minValues[i] < globalMinValue) revert Angela_ValueBelowMin();
+            if (maxValues[i] > globalMaxValue) revert Angela_ValueAboveMax();
+            if (minValues[i] > maxValues[i]) revert Angela_ValueBelowMin();
+
+            _claws.push(ClawRecord({
+                clawKind: clawKinds[i],
+                payloadHash: payloadHashes[i],
+                minValue: minValues[i],
+                maxValue: maxValues[i],
+                operator: msg.sender,
+                submittedAtBlock: block.number,
+                executed: false,
+                reverted: false,
+                executedAtBlock: 0,
+                actualValue: 0
+            }));
+            clawIds[i] = _claws.length - 1;
+            lastBlock = block.number;
+        }
+        _lastClawBlock = lastBlock;
+        _clawsInWindow[windowStart] = windowCount;
+
+        for (uint256 i = 0; i < n; i++) {
+            emit ClawSubmitted(clawIds[i], clawKinds[i], payloadHashes[i], minValues[i], maxValues[i], msg.sender, block.number);
+        }
+    }
+
+    function markClawExecuted(uint256 clawId, uint256 actualValue) external onlyOperator whenNotPaused whenNotHalted {
+        if (clawId >= _claws.length) revert Angela_ClawNotFound();
+        ClawRecord storage c = _claws[clawId];
+        if (c.executed) revert Angela_ClawAlreadyExecuted();
+        if (c.reverted) revert Angela_ClawAlreadyReverted();
+        if (actualValue < c.minValue) revert Angela_ValueBelowMin();
+        if (actualValue > c.maxValue) revert Angela_ValueAboveMax();
+
+        c.executed = true;
+        c.executedAtBlock = block.number;
+        c.actualValue = actualValue;
+        emit ClawExecuted(clawId, actualValue, block.number);
+    }
+
+    function markClawReverted(uint256 clawId, bytes calldata reason) external onlyOperator whenNotPaused {
+        if (clawId >= _claws.length) revert Angela_ClawNotFound();
+        ClawRecord storage c = _claws[clawId];
+        if (c.executed) revert Angela_ClawAlreadyExecuted();
+        if (c.reverted) revert Angela_ClawAlreadyReverted();
+
+        c.reverted = true;
+        c.executedAtBlock = block.number;
+        emit ClawReverted(clawId, reason, block.number);
+    }
+
+    // -------------------------------------------------------------------------
+    // GUARDIAN
+    // -------------------------------------------------------------------------
+
+    function setOperator(address newOperator) external onlyGuardian {
+        if (newOperator == address(0)) revert Angela_ZeroAddress();
+        address prev = operator;
+        operator = newOperator;
+        emit OperatorSet(prev, newOperator);
+    }
+
+    function setGuardian(address newGuardian) external onlyGuardian {
