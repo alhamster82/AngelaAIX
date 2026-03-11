@@ -1062,3 +1062,79 @@ contract AngelaAIX {
             minValsOut[i] = c.minValue;
             maxValsOut[i] = c.maxValue;
             operatorsOut[i] = c.operator;
+            submittedBlocksOut[i] = c.submittedAtBlock;
+            executedOut[i] = c.executed;
+            revertedOut[i] = c.reverted;
+            executedBlocksOut[i] = c.executedAtBlock;
+            actualValsOut[i] = c.actualValue;
+        }
+    }
+
+    function listClawIds(uint256 offset, uint256 limit) external view returns (uint256[] memory) {
+        return getClawIdsPaginated(offset, limit);
+    }
+    function getClawCount() external view returns (uint256) { return _claws.length; }
+    function getLastClawBlock() external view returns (uint256) { return _lastClawBlock; }
+    function getBalance() external view returns (uint256) { return address(this).balance; }
+    function getContractBalance() external view returns (uint256) { return address(this).balance; }
+    function treasuryAddress() external view returns (address) { return treasury; }
+    function guardianHubAddress() external view returns (address) { return guardianHub; }
+    function operatorAddress() external view returns (address) { return operator; }
+    function guardianAddress() external view returns (address) { return guardian; }
+    function isPaused() external view returns (bool) { return paused; }
+    function isHalted() external view returns (bool) { return emergencyHalt; }
+    function cooldown() external view returns (uint256) { return cooldownBlocks; }
+    function rateWindow() external view returns (uint256) { return rateLimitWindowBlocks; }
+    function rateMax() external view returns (uint256) { return rateLimitMaxClaws; }
+    function globalMin() external view returns (uint256) { return globalMinValue; }
+    function globalMax() external view returns (uint256) { return globalMaxValue; }
+    function numClaws() external view returns (uint256) { return _claws.length; }
+    function protocolVersion() external pure returns (uint256) { return AAIX_VERSION; }
+    function maxKind() external pure returns (uint256) { return MAX_CLAW_KIND; }
+    function batchLimit() external pure returns (uint256) { return MAX_CLAWS_PER_BATCH; }
+    function minCooldown() external pure returns (uint256) { return MIN_COOLDOWN_BLOCKS; }
+    function maxCooldown() external pure returns (uint256) { return MAX_COOLDOWN_BLOCKS; }
+    function minWindow() external pure returns (uint256) { return MIN_WINDOW_BLOCKS; }
+    function maxWindow() external pure returns (uint256) { return MAX_WINDOW_BLOCKS; }
+    function domain() external pure returns (bytes32) { return AAIX_DOMAIN; }
+    function clawKindName(uint8 k) external pure returns (string memory) { return getClawKindName(k); }
+    function executedCount() external view returns (uint256) { return countExecutedClaws(); }
+    function revertedCount() external view returns (uint256) { return countRevertedClaws(); }
+    function pendingCount() external view returns (uint256) { return countPendingClaws(); }
+    function canSubmit() external view returns (bool) { return canSubmitNow(); }
+    function blocksUntilNextClaw() external view returns (uint256) { return blocksUntilNextClawAllowed(); }
+    function currentWindowClawCount() external view returns (uint256) { return clawsInCurrentWindow(); }
+    function submitAllowed() external view returns (bool) { return isSubmitAllowed(); }
+    function cooldownRemaining() external view returns (uint256) { return cooldownBlocksRemaining(); }
+    function clawsLeftInWindow() external view returns (uint256) { return clawsRemainingInWindow(); }
+    function withinBounds(uint256 v) external view returns (bool) { return isWithinBounds(v); }
+    function pending(uint256 clawId) external view returns (bool) { return isClawPending(clawId); }
+    function windowStart(uint256 blockNum) external view returns (uint256) { return computeWindowStart(blockNum); }
+    function cooldownEnd(uint256 lastBlock) external view returns (uint256) { return computeCooldownEnd(lastBlock); }
+
+    function getRoleAddresses() external view returns (
+        address op,
+        address guard,
+        address treas,
+        address hub
+    ) {
+        return (operator, guardian, treasury, guardianHub);
+    }
+    function getLimitConfig() external view returns (
+        uint256 cooldownBlks,
+        uint256 windowBlks,
+        uint256 maxPerWindow,
+        uint256 gMin,
+        uint256 gMax
+    ) {
+        return (cooldownBlocks, rateLimitWindowBlocks, rateLimitMaxClaws, globalMinValue, globalMaxValue);
+    }
+    function getStatus() external view returns (
+        bool pausedStatus,
+        bool haltStatus,
+        uint256 totalClawCount,
+        uint256 balanceWei
+    ) {
+        return (paused, emergencyHalt, _claws.length, address(this).balance);
+    }
+
