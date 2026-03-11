@@ -758,3 +758,79 @@ contract AngelaAIX {
     }
 
     function getConstants() external pure returns (
+        uint256 version,
+        uint256 maxClawKind,
+        uint256 maxClawsPerBatch,
+        uint256 minCooldownBlocks,
+        uint256 maxCooldownBlocks,
+        uint256 minWindowBlocks,
+        uint256 maxWindowBlocks
+    ) {
+        return (
+            AAIX_VERSION,
+            MAX_CLAW_KIND,
+            MAX_CLAWS_PER_BATCH,
+            MIN_COOLDOWN_BLOCKS,
+            MAX_COOLDOWN_BLOCKS,
+            MIN_WINDOW_BLOCKS,
+            MAX_WINDOW_BLOCKS
+        );
+    }
+
+    function clawIdAt(uint256 index) external view returns (uint256) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return index;
+    }
+
+    function totalClawRecords() external view returns (uint256) {
+        return _claws.length;
+    }
+
+    function payloadHashAt(uint256 clawId) external view returns (bytes32) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].payloadHash;
+    }
+
+    function submittedBlockAt(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].submittedAtBlock;
+    }
+
+    function executedBlockAt(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].executedAtBlock;
+    }
+
+    function actualValueAt(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].actualValue;
+    }
+
+    function executedAt(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return _claws[clawId].executed;
+    }
+
+    function revertedAt(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return _claws[clawId].reverted;
+    }
+
+    function operatorAt(uint256 clawId) external view returns (address) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].operator;
+    }
+
+    function kindAt(uint256 clawId) external view returns (uint8) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].clawKind;
+    }
+
+    function minValueAt(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].minValue;
+    }
+
+    function maxValueAt(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].maxValue;
