@@ -74,3 +74,79 @@ contract AngelaAIX {
     uint8 public constant CLAW_KIND_EXIT = 6;
     uint8 public constant CLAW_KIND_ENTER = 7;
     uint8 public constant CLAW_KIND_CUSTOM_A = 8;
+    uint8 public constant CLAW_KIND_CUSTOM_B = 9;
+    uint8 public constant CLAW_KIND_CUSTOM_C = 10;
+    uint8 public constant CLAW_KIND_EMERGENCY = 11;
+    uint8 public constant CLAW_KIND_PASSTHROUGH = 12;
+    uint256 public constant MAX_CLAW_KIND = 12;
+    uint256 public constant MAX_CLAWS_PER_BATCH = 32;
+    uint256 public constant MIN_COOLDOWN_BLOCKS = 2;
+    uint256 public constant MAX_COOLDOWN_BLOCKS = 1000;
+    uint256 public constant MIN_WINDOW_BLOCKS = 10;
+    uint256 public constant MAX_WINDOW_BLOCKS = 500;
+    uint256 public constant DEFAULT_RATE_WINDOW = 100;
+    uint256 public constant DEFAULT_MAX_PER_WINDOW = 20;
+    bytes32 public constant AAIX_DOMAIN = keccak256("AngelaAIX.Claw.v3");
+
+    // -------------------------------------------------------------------------
+    // IMMUTABLES
+    // -------------------------------------------------------------------------
+
+    address public immutable treasury;
+    address public immutable guardianHub;
+
+    // -------------------------------------------------------------------------
+    // STATE
+    // -------------------------------------------------------------------------
+
+    struct ClawRecord {
+        uint8 clawKind;
+        bytes32 payloadHash;
+        uint256 minValue;
+        uint256 maxValue;
+        address operator;
+        uint256 submittedAtBlock;
+        bool executed;
+        bool reverted;
+        uint256 executedAtBlock;
+        uint256 actualValue;
+    }
+
+    address public operator;
+    address public guardian;
+    bool public paused;
+    bool public emergencyHalt;
+    uint256 private _lock;
+
+    uint256 public cooldownBlocks;
+    uint256 public rateLimitWindowBlocks;
+    uint256 public rateLimitMaxClaws;
+    uint256 public globalMinValue;
+    uint256 public globalMaxValue;
+
+    ClawRecord[] private _claws;
+    uint256 private _lastClawBlock;
+    mapping(uint256 => uint256) private _clawsInWindow;
+
+    // -------------------------------------------------------------------------
+    // CONSTRUCTOR
+    // -------------------------------------------------------------------------
+
+    constructor() {
+        treasury = 0x4f7a2e9c1b8d3f6a0e5c2d9b7f4a1e8c3b6d0;
+        guardianHub = 0x5a3e8f1c9d2b7e4a0f6c3d8b1e9a5c2f7d4b0;
+        guardian = 0x6b2d9e4f1a8c3b7e0d5f2a9c6e1b4d8f3a7c0;
+        operator = 0x4f7a2e9c1b8d3f6a0e5c2d9b7f4a1e8c3b6d0;
+        cooldownBlocks = 5;
+        rateLimitWindowBlocks = DEFAULT_RATE_WINDOW;
+        rateLimitMaxClaws = DEFAULT_MAX_PER_WINDOW;
+        globalMinValue = 0;
+        globalMaxValue = 1000 ether;
+    }
+
+    // -------------------------------------------------------------------------
+    // MODIFIERS
+    // -------------------------------------------------------------------------
+
+    modifier onlyOperator() {
+        if (msg.sender != operator) revert Angela_NotOperator();
