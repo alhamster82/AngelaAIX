@@ -378,3 +378,79 @@ contract AngelaAIX {
             c.executedAtBlock,
             c.actualValue
         );
+    }
+
+    function clawCount() external view returns (uint256) {
+        return _claws.length;
+    }
+
+    function lastClawBlock() external view returns (uint256) {
+        return _lastClawBlock;
+    }
+
+    function canSubmitNow() external view returns (bool) {
+        if (paused || emergencyHalt) return false;
+        if (block.number < _lastClawBlock + cooldownBlocks) return false;
+        uint256 windowStart = block.number - (block.number % rateLimitWindowBlocks);
+        return _clawsInWindow[windowStart] < rateLimitMaxClaws;
+    }
+
+    function blocksUntilNextClawAllowed() external view returns (uint256) {
+        if (_lastClawBlock + cooldownBlocks <= block.number) return 0;
+        return _lastClawBlock + cooldownBlocks - block.number;
+    }
+
+    function clawsInCurrentWindow() external view returns (uint256) {
+        uint256 windowStart = block.number - (block.number % rateLimitWindowBlocks);
+        return _clawsInWindow[windowStart];
+    }
+
+    function contractBalance() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    function getClawKindName(uint8 kind) external pure returns (string memory) {
+        if (kind == 1) return "swap";
+        if (kind == 2) return "batch";
+        if (kind == 3) return "signal";
+        if (kind == 4) return "harvest";
+        if (kind == 5) return "rebalance";
+        if (kind == 6) return "exit";
+        if (kind == 7) return "enter";
+        if (kind == 8) return "custom_a";
+        if (kind == 9) return "custom_b";
+        if (kind == 10) return "custom_c";
+        if (kind == 11) return "emergency";
+        if (kind == 12) return "passthrough";
+        return "unknown";
+    }
+
+    function getClawsBatch(uint256[] calldata clawIds) external view returns (
+        uint8[] memory kinds,
+        bytes32[] memory payloadHashes,
+        uint256[] memory minVals,
+        uint256[] memory maxVals,
+        address[] memory operators,
+        uint256[] memory submittedBlocks,
+        bool[] memory executedFlags,
+        bool[] memory revertedFlags,
+        uint256[] memory executedBlocks,
+        uint256[] memory actualVals
+    ) {
+        uint256 n = clawIds.length;
+        kinds = new uint8[](n);
+        payloadHashes = new bytes32[](n);
+        minVals = new uint256[](n);
+        maxVals = new uint256[](n);
+        operators = new address[](n);
+        submittedBlocks = new uint256[](n);
+        executedFlags = new bool[](n);
+        revertedFlags = new bool[](n);
+        executedBlocks = new uint256[](n);
+        actualVals = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            ClawRecord storage c = _claws[clawIds[i]];
+            kinds[i] = c.clawKind;
+            payloadHashes[i] = c.payloadHash;
+            minVals[i] = c.minValue;
