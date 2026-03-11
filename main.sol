@@ -834,3 +834,79 @@ contract AngelaAIX {
     function maxValueAt(uint256 clawId) external view returns (uint256) {
         if (clawId >= _claws.length) revert Angela_InvalidClawId();
         return _claws[clawId].maxValue;
+    }
+
+    function cooldownBlocksRemaining() external view returns (uint256) {
+        if (_lastClawBlock + cooldownBlocks <= block.number) return 0;
+        return _lastClawBlock + cooldownBlocks - block.number;
+    }
+
+    function clawsRemainingInWindow() external view returns (uint256) {
+        uint256 windowStart = block.number - (block.number % rateLimitWindowBlocks);
+        uint256 used = _clawsInWindow[windowStart];
+        if (used >= rateLimitMaxClaws) return 0;
+        return rateLimitMaxClaws - used;
+    }
+
+    function isSubmitAllowed() external view returns (bool) {
+        if (paused || emergencyHalt) return false;
+        if (block.number < _lastClawBlock + cooldownBlocks) return false;
+        uint256 windowStart = block.number - (block.number % rateLimitWindowBlocks);
+        return _clawsInWindow[windowStart] < rateLimitMaxClaws;
+    }
+
+    function proportional(uint256 part, uint256 total, uint256 whole) external pure returns (uint256) {
+        if (total == 0) return 0;
+        return (part * whole) / total;
+    }
+
+    function saturatingSub(uint256 a, uint256 b) external pure returns (uint256) {
+        return a > b ? a - b : 0;
+    }
+
+    function domainSeed() external pure returns (bytes32) {
+        return AAIX_DOMAIN;
+    }
+
+    function version() external pure returns (uint256) {
+        return AAIX_VERSION;
+    }
+
+    function maxClawKind() external pure returns (uint8) {
+        return uint8(MAX_CLAW_KIND);
+    }
+
+    function maxBatchSize() external pure returns (uint256) {
+        return MAX_CLAWS_PER_BATCH;
+    }
+
+    function getKindsBatch(uint256[] calldata clawIds) external view returns (uint8[] memory) {
+        uint256 n = clawIds.length;
+        uint8[] memory out = new uint8[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            out[i] = _claws[clawIds[i]].clawKind;
+        }
+        return out;
+    }
+    function getPayloadHashesBatch(uint256[] calldata clawIds) external view returns (bytes32[] memory) {
+        uint256 n = clawIds.length;
+        bytes32[] memory out = new bytes32[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            out[i] = _claws[clawIds[i]].payloadHash;
+        }
+        return out;
+    }
+    function getMinValuesBatch(uint256[] calldata clawIds) external view returns (uint256[] memory) {
+        uint256 n = clawIds.length;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            out[i] = _claws[clawIds[i]].minValue;
+        }
+        return out;
+    }
+    function getMaxValuesBatch(uint256[] calldata clawIds) external view returns (uint256[] memory) {
+        uint256 n = clawIds.length;
+        uint256[] memory out = new uint256[](n);
