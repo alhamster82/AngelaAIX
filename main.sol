@@ -530,3 +530,79 @@ contract AngelaAIX {
         return _claws[clawId].minValue;
     }
     function clawMaxValue(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].maxValue;
+    }
+    function clawOperator(uint256 clawId) external view returns (address) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].operator;
+    }
+    function clawSubmittedAtBlock(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].submittedAtBlock;
+    }
+    function clawExecutedAtBlock(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].executedAtBlock;
+    }
+    function clawActualValue(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].actualValue;
+    }
+
+    function getCooldownBlocks() external view returns (uint256) { return cooldownBlocks; }
+    function getRateLimitWindow() external view returns (uint256) { return rateLimitWindowBlocks; }
+    function getRateLimitMax() external view returns (uint256) { return rateLimitMaxClaws; }
+    function getGlobalMinValue() external view returns (uint256) { return globalMinValue; }
+    function getGlobalMaxValue() external view returns (uint256) { return globalMaxValue; }
+    function getOperator() external view returns (address) { return operator; }
+    function getGuardian() external view returns (address) { return guardian; }
+    function getTreasury() external view returns (address) { return treasury; }
+    function getGuardianHub() external view returns (address) { return guardianHub; }
+    function getPaused() external view returns (bool) { return paused; }
+    function getEmergencyHalt() external view returns (bool) { return emergencyHalt; }
+
+    function countExecutedClaws() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _claws.length; i++) if (_claws[i].executed) c++;
+        return c;
+    }
+    function countRevertedClaws() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _claws.length; i++) if (_claws[i].reverted) c++;
+        return c;
+    }
+    function countPendingClaws() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _claws.length; i++) if (!_claws[i].executed && !_claws[i].reverted) c++;
+        return c;
+    }
+    function countClawsByKind(uint8 kind) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _claws.length; i++) if (_claws[i].clawKind == kind) c++;
+        return c;
+    }
+    function countClawsByOperator(address op) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _claws.length; i++) if (_claws[i].operator == op) c++;
+        return c;
+    }
+
+    function getClawIdsByKind(uint8 kind, uint256 maxReturn) external view returns (uint256[] memory) {
+        uint256[] memory temp = new uint256[](_claws.length);
+        uint256 count = 0;
+        for (uint256 i = 0; i < _claws.length && count < maxReturn; i++) {
+            if (_claws[i].clawKind == kind) { temp[count] = i; count++; }
+        }
+        uint256[] memory out = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) out[i] = temp[i];
+        return out;
+    }
+    function getClawIdsByOperator(address op, uint256 maxReturn) external view returns (uint256[] memory) {
+        uint256[] memory temp = new uint256[](_claws.length);
+        uint256 count = 0;
+        for (uint256 i = 0; i < _claws.length && count < maxReturn; i++) {
+            if (_claws[i].operator == op) { temp[count] = i; count++; }
+        }
+        uint256[] memory out = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) out[i] = temp[i];
