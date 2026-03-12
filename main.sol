@@ -1214,3 +1214,79 @@ contract AngelaAIX {
         uint256 ex = 0;
         uint256 sum = 0;
         for (uint256 i = 0; i < _claws.length; i++) {
+            if (_claws[i].executed) { ex++; sum += _claws[i].actualValue; }
+        }
+        return ex == 0 ? 0 : sum / ex;
+    }
+    function countByKindRange(uint8 kindLow, uint8 kindHigh) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _claws.length; i++) {
+            if (_claws[i].clawKind >= kindLow && _claws[i].clawKind <= kindHigh) c++;
+        }
+        return c;
+    }
+    function getKindNames() external pure returns (string[] memory) {
+        string[] memory names = new string[](12);
+        names[0] = "swap";
+        names[1] = "batch";
+        names[2] = "signal";
+        names[3] = "harvest";
+        names[4] = "rebalance";
+        names[5] = "exit";
+        names[6] = "enter";
+        names[7] = "custom_a";
+        names[8] = "custom_b";
+        names[9] = "custom_c";
+        names[10] = "emergency";
+        names[11] = "passthrough";
+        return names;
+    }
+    function kindFromName(string calldata name) external pure returns (int256) {
+        if (keccak256(bytes(name)) == keccak256("swap")) return 1;
+        if (keccak256(bytes(name)) == keccak256("batch")) return 2;
+        if (keccak256(bytes(name)) == keccak256("signal")) return 3;
+        if (keccak256(bytes(name)) == keccak256("harvest")) return 4;
+        if (keccak256(bytes(name)) == keccak256("rebalance")) return 5;
+        if (keccak256(bytes(name)) == keccak256("exit")) return 6;
+        if (keccak256(bytes(name)) == keccak256("enter")) return 7;
+        if (keccak256(bytes(name)) == keccak256("custom_a")) return 8;
+        if (keccak256(bytes(name)) == keccak256("custom_b")) return 9;
+        if (keccak256(bytes(name)) == keccak256("custom_c")) return 10;
+        if (keccak256(bytes(name)) == keccak256("emergency")) return 11;
+        if (keccak256(bytes(name)) == keccak256("passthrough")) return 12;
+        return -1;
+    }
+    function supportedKinds() external pure returns (uint8[] memory) {
+        uint8[] memory k = new uint8[](12);
+        k[0] = 1; k[1] = 2; k[2] = 3; k[3] = 4; k[4] = 5; k[5] = 6;
+        k[6] = 7; k[7] = 8; k[8] = 9; k[9] = 10; k[10] = 11; k[11] = 12;
+        return k;
+    }
+    function isSupportedKind(uint8 k) external pure returns (bool) {
+        return k >= 1 && k <= MAX_CLAW_KIND;
+    }
+    function clampKind(uint8 k) external pure returns (uint8) {
+        if (k == 0) return 1;
+        if (k > MAX_CLAW_KIND) return uint8(MAX_CLAW_KIND);
+        return k;
+    }
+    function checkValueInRange(uint256 value, uint256 minVal, uint256 maxVal) external pure returns (bool) {
+        return value >= minVal && value <= maxVal;
+    }
+    function checkGlobalRange(uint256 value) external view returns (bool) {
+        return value >= globalMinValue && value <= globalMaxValue;
+    }
+    function getClawRecord(uint256 clawId) external view returns (ClawRecord memory) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId];
+    }
+    function getClawRecordsBatch(uint256[] calldata clawIds) external view returns (ClawRecord[] memory) {
+        uint256 n = clawIds.length;
+        ClawRecord[] memory out = new ClawRecord[](n);
+        for (uint256 i = 0; i < n; i++) {
+            if (clawIds[i] >= _claws.length) revert Angela_InvalidClawId();
+            out[i] = _claws[clawIds[i]];
+        }
+        return out;
+    }
+    function recordLength() external view returns (uint256) { return _claws.length; }
