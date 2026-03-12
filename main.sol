@@ -1290,3 +1290,79 @@ contract AngelaAIX {
         return out;
     }
     function recordLength() external view returns (uint256) { return _claws.length; }
+    function at(uint256 index) external view returns (ClawRecord memory) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index];
+    }
+    function atKind(uint256 index) external view returns (uint8) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index].clawKind;
+    }
+    function atPayload(uint256 index) external view returns (bytes32) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index].payloadHash;
+    }
+    function atMin(uint256 index) external view returns (uint256) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index].minValue;
+    }
+    function atMax(uint256 index) external view returns (uint256) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index].maxValue;
+    }
+    function atOperator(uint256 index) external view returns (address) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index].operator;
+    }
+    function atSubmittedBlock(uint256 index) external view returns (uint256) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index].submittedAtBlock;
+    }
+    function atExecuted(uint256 index) external view returns (bool) {
+        if (index >= _claws.length) return false;
+        return _claws[index].executed;
+    }
+    function atReverted(uint256 index) external view returns (bool) {
+        if (index >= _claws.length) return false;
+        return _claws[index].reverted;
+    }
+    function atExecutedBlock(uint256 index) external view returns (uint256) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index].executedAtBlock;
+    }
+    function atActualValue(uint256 index) external view returns (uint256) {
+        if (index >= _claws.length) revert Angela_IndexOutOfRange();
+        return _claws[index].actualValue;
+    }
+
+    function getPaginatedClawIds(uint256 offset, uint256 limit) external view returns (uint256[] memory) {
+        return getClawIdsPaginated(offset, limit);
+    }
+    function fetchClaw(uint256 id) external view returns (ClawRecord memory) {
+        if (id >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[id];
+    }
+    function fetchClaws(uint256[] calldata ids) external view returns (ClawRecord[] memory) {
+        return getClawRecordsBatch(ids);
+    }
+    function totalRecords() external view returns (uint256) { return _claws.length; }
+    function length() external view returns (uint256) { return _claws.length; }
+    function size() external view returns (uint256) { return _claws.length; }
+    function getStats() external view returns (
+        uint256 total,
+        uint256 executed,
+        uint256 reverted,
+        uint256 pending,
+        uint256 balance
+    ) {
+        uint256 ex = 0;
+        uint256 rv = 0;
+        for (uint256 i = 0; i < _claws.length; i++) {
+            if (_claws[i].executed) ex++;
+            else if (_claws[i].reverted) rv++;
+        }
+        return (_claws.length, ex, rv, _claws.length - ex - rv, address(this).balance);
+    }
+    function getConfigSnapshot() external view returns (
+        address op,
+        address guard,
