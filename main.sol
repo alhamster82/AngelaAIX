@@ -1594,3 +1594,79 @@ contract AngelaAIX {
     function findFirstClawByKind(uint8 kind) external view returns (int256) {
         for (uint256 i = 0; i < _claws.length; i++) {
             if (_claws[i].clawKind == kind) return int256(i);
+        }
+        return -1;
+    }
+    function findFirstClawByOperator(address op) external view returns (int256) {
+        for (uint256 i = 0; i < _claws.length; i++) {
+            if (_claws[i].operator == op) return int256(i);
+        }
+        return -1;
+    }
+    function lastSubmittedBlock() external view returns (uint256) { return _lastClawBlock; }
+    function nextClawAllowedAtBlock() external view returns (uint256) {
+        return _lastClawBlock + cooldownBlocks;
+    }
+    function currentWindowStartBlock() external view returns (uint256) {
+        return block.number - (block.number % rateLimitWindowBlocks);
+    }
+    function windowClawCountAt(uint256 windowStart) external view returns (uint256) {
+        return _clawsInWindow[windowStart];
+    }
+    function remainingSlotsInWindow() external view returns (uint256) {
+        return clawsRemainingInWindow();
+    }
+    function nextClawBlock() external view returns (uint256) {
+        return blocksUntilNextClawAllowed();
+    }
+    function allowedToSubmit() external view returns (bool) { return isSubmitAllowed(); }
+    function readyForClaw() external view returns (bool) { return canSubmitNow(); }
+    function protocolRevision() external pure returns (uint256) { return AAIX_VERSION; }
+    function domainSeparator() external pure returns (bytes32) { return AAIX_DOMAIN; }
+    function maxClawType() external pure returns (uint8) { return uint8(MAX_CLAW_KIND); }
+    function batchMax() external pure returns (uint256) { return MAX_CLAWS_PER_BATCH; }
+    function cooldownMin() external pure returns (uint256) { return MIN_COOLDOWN_BLOCKS; }
+    function cooldownMax() external pure returns (uint256) { return MAX_COOLDOWN_BLOCKS; }
+    function windowMin() external pure returns (uint256) { return MIN_WINDOW_BLOCKS; }
+    function windowMax() external pure returns (uint256) { return MAX_WINDOW_BLOCKS; }
+    function kindLabel(uint8 k) external pure returns (string memory) { return getClawKindName(k); }
+    function clawTypeName(uint8 k) external pure returns (string memory) { return getClawKindName(k); }
+    function getClawType(uint256 clawId) external view returns (uint8) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].clawKind;
+    }
+    function getClawPayload(uint256 clawId) external view returns (bytes32) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].payloadHash;
+    }
+    function getClawMin(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].minValue;
+    }
+    function getClawMax(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].maxValue;
+    }
+    function getClawOperatorAddr(uint256 clawId) external view returns (address) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].operator;
+    }
+    function getClawSubmittedBlock(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].submittedAtBlock;
+    }
+    function getClawExecutedBlock(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].executedAtBlock;
+    }
+    function getClawActual(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId].actualValue;
+    }
+    function getClawExecuted(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return _claws[clawId].executed;
+    }
+    function getClawReverted(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return _claws[clawId].reverted;
