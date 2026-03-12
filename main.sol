@@ -1442,3 +1442,79 @@ contract AngelaAIX {
         return weiVal / 1 ether;
     }
     function etherToWei(uint256 etherVal) external pure returns (uint256) {
+        return etherVal * 1 ether;
+    }
+    function percentOf(uint256 part, uint256 whole) external pure returns (uint256) {
+        if (whole == 0) return 0;
+        return (part * 100) / whole;
+    }
+    function absDiff(uint256 a, uint256 b) external pure returns (uint256) {
+        return a > b ? a - b : b - a;
+    }
+    function isZeroAddress(address a) external pure returns (bool) { return a == address(0); }
+    function isZeroBytes32(bytes32 b) external pure returns (bool) { return b == bytes32(0); }
+
+    function getClawIds() external view returns (uint256[] memory) {
+        uint256 n = _claws.length;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = i;
+        return out;
+    }
+    function getAllClawSummaries() external view returns (
+        uint8[] memory kinds,
+        uint256[] memory minVals,
+        uint256[] memory maxVals,
+        bool[] memory executedFlags,
+        bool[] memory revertedFlags,
+        uint256[] memory actualVals
+    ) {
+        uint256 n = _claws.length;
+        kinds = new uint8[](n);
+        minVals = new uint256[](n);
+        maxVals = new uint256[](n);
+        executedFlags = new bool[](n);
+        revertedFlags = new bool[](n);
+        actualVals = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            ClawRecord storage c = _claws[i];
+            kinds[i] = c.clawKind;
+            minVals[i] = c.minValue;
+            maxVals[i] = c.maxValue;
+            executedFlags[i] = c.executed;
+            revertedFlags[i] = c.reverted;
+            actualVals[i] = c.actualValue;
+        }
+    }
+    function getClawKindsPaginated(uint256 offset, uint256 limit) external view returns (uint8[] memory) {
+        uint256 total = _claws.length;
+        if (offset >= total) return new uint8[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        uint8[] memory out = new uint8[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = _claws[offset + i].clawKind;
+        return out;
+    }
+    function getPayloadHashesPaginated(uint256 offset, uint256 limit) external view returns (bytes32[] memory) {
+        uint256 total = _claws.length;
+        if (offset >= total) return new bytes32[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        bytes32[] memory out = new bytes32[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = _claws[offset + i].payloadHash;
+        return out;
+    }
+    function getOperatorsPaginated(uint256 offset, uint256 limit) external view returns (address[] memory) {
+        uint256 total = _claws.length;
+        if (offset >= total) return new address[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        address[] memory out = new address[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = _claws[offset + i].operator;
+        return out;
+    }
+    function getSubmittedBlocksPaginated(uint256 offset, uint256 limit) external view returns (uint256[] memory) {
+        uint256 total = _claws.length;
+        if (offset >= total) return new uint256[](0);
