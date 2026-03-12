@@ -1518,3 +1518,79 @@ contract AngelaAIX {
     function getSubmittedBlocksPaginated(uint256 offset, uint256 limit) external view returns (uint256[] memory) {
         uint256 total = _claws.length;
         if (offset >= total) return new uint256[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = _claws[offset + i].submittedAtBlock;
+        return out;
+    }
+    function getActualValuesPaginated(uint256 offset, uint256 limit) external view returns (uint256[] memory) {
+        uint256 total = _claws.length;
+        if (offset >= total) return new uint256[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = _claws[offset + i].actualValue;
+        return out;
+    }
+    function indexOfClawByPayload(bytes32 payloadHash, uint256 startIndex) external view returns (int256) {
+        for (uint256 i = startIndex; i < _claws.length; i++) {
+            if (_claws[i].payloadHash == payloadHash) return int256(i);
+        }
+        return -1;
+    }
+    function countClawsWithPayload(bytes32 payloadHash) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _claws.length; i++) if (_claws[i].payloadHash == payloadHash) c++;
+        return c;
+    }
+    function getClawIdsByPayload(bytes32 payloadHash, uint256 maxReturn) external view returns (uint256[] memory) {
+        uint256[] memory temp = new uint256[](_claws.length);
+        uint256 count = 0;
+        for (uint256 i = 0; i < _claws.length && count < maxReturn; i++) {
+            if (_claws[i].payloadHash == payloadHash) { temp[count] = i; count++; }
+        }
+        uint256[] memory out = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) out[i] = temp[i];
+        return out;
+    }
+    function totalActualValue() external view returns (uint256) { return sumActualValues(); }
+    function totalExecutedValue() external view returns (uint256) { return sumActualValues(); }
+    function executedTotal() external view returns (uint256) { return sumActualValues(); }
+    function pendingTotalMax() external view returns (uint256) { return sumMaxValuesPending(); }
+
+    function getClawRecordStruct(uint256 clawId) external view returns (ClawRecord memory) {
+        if (clawId >= _claws.length) revert Angela_InvalidClawId();
+        return _claws[clawId];
+    }
+    function getRecords(uint256 fromIndex, uint256 toIndex) external view returns (ClawRecord[] memory) {
+        if (toIndex > _claws.length) toIndex = _claws.length;
+        if (fromIndex >= toIndex) return new ClawRecord[](0);
+        uint256 n = toIndex - fromIndex;
+        ClawRecord[] memory out = new ClawRecord[](n);
+        for (uint256 i = 0; i < n; i++) out[i] = _claws[fromIndex + i];
+        return out;
+    }
+    function findFirstPendingClawId() external view returns (int256) {
+        for (uint256 i = 0; i < _claws.length; i++) {
+            if (!_claws[i].executed && !_claws[i].reverted) return int256(i);
+        }
+        return -1;
+    }
+    function findFirstExecutedClawId() external view returns (int256) {
+        for (uint256 i = 0; i < _claws.length; i++) {
+            if (_claws[i].executed) return int256(i);
+        }
+        return -1;
+    }
+    function findFirstRevertedClawId() external view returns (int256) {
+        for (uint256 i = 0; i < _claws.length; i++) {
+            if (_claws[i].reverted) return int256(i);
+        }
+        return -1;
+    }
+    function findFirstClawByKind(uint8 kind) external view returns (int256) {
+        for (uint256 i = 0; i < _claws.length; i++) {
+            if (_claws[i].clawKind == kind) return int256(i);
