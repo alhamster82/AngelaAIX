@@ -1366,3 +1366,79 @@ contract AngelaAIX {
     function getConfigSnapshot() external view returns (
         address op,
         address guard,
+        bool pausedFlag,
+        bool haltFlag,
+        uint256 cooldownBlks,
+        uint256 windowBlks,
+        uint256 maxClaws,
+        uint256 gMin,
+        uint256 gMax
+    ) {
+        return (
+            operator,
+            guardian,
+            paused,
+            emergencyHalt,
+            cooldownBlocks,
+            rateLimitWindowBlocks,
+            rateLimitMaxClaws,
+            globalMinValue,
+            globalMaxValue
+        );
+    }
+    function getImmutablesSnapshot() external view returns (address treas, address hub) {
+        return (treasury, guardianHub);
+    }
+    function getVersionInfo() external pure returns (uint256 version, bytes32 domain) {
+        return (AAIX_VERSION, AAIX_DOMAIN);
+    }
+    function getLimitConstants() external pure returns (
+        uint256 minCooldown,
+        uint256 maxCooldown,
+        uint256 minWin,
+        uint256 maxWin
+    ) {
+        return (MIN_COOLDOWN_BLOCKS, MAX_COOLDOWN_BLOCKS, MIN_WINDOW_BLOCKS, MAX_WINDOW_BLOCKS);
+    }
+    function isOperatorRole(address account) external view returns (bool) { return account == operator; }
+    function isGuardianRole(address account) external view returns (bool) { return account == guardian; }
+    function isTreasuryRole(address account) external view returns (bool) { return account == treasury; }
+    function isGuardianHubRole(address account) external view returns (bool) { return account == guardianHub; }
+    function hasOperatorRole(address account) external view returns (bool) { return account == operator; }
+    function hasGuardianRole(address account) external view returns (bool) { return account == guardian; }
+    function safeClawKind(uint256 clawId) external view returns (uint8) {
+        if (clawId >= _claws.length) return 0;
+        return _claws[clawId].clawKind;
+    }
+    function safeClawPayload(uint256 clawId) external view returns (bytes32) {
+        if (clawId >= _claws.length) return bytes32(0);
+        return _claws[clawId].payloadHash;
+    }
+    function safeClawMin(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) return 0;
+        return _claws[clawId].minValue;
+    }
+    function safeClawMax(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) return 0;
+        return _claws[clawId].maxValue;
+    }
+    function safeClawOperator(uint256 clawId) external view returns (address) {
+        if (clawId >= _claws.length) return address(0);
+        return _claws[clawId].operator;
+    }
+    function safeClawExecuted(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return _claws[clawId].executed;
+    }
+    function safeClawReverted(uint256 clawId) external view returns (bool) {
+        if (clawId >= _claws.length) return false;
+        return _claws[clawId].reverted;
+    }
+    function safeClawActualValue(uint256 clawId) external view returns (uint256) {
+        if (clawId >= _claws.length) return 0;
+        return _claws[clawId].actualValue;
+    }
+    function weiToEther(uint256 weiVal) external pure returns (uint256) {
+        return weiVal / 1 ether;
+    }
+    function etherToWei(uint256 etherVal) external pure returns (uint256) {
